@@ -16,8 +16,12 @@ import { toast } from "sonner";
 const TaskCard = ({ task, index, handleTaskChanged }) => {
   const [isEditting, setIsEditting] = useState(false);
   const [updateTaskTitle, setUpdateTaskTitle] = useState(task.title || "");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const deletedTask = async (taskId) => {
+    if (isDeleting) return;
+    setIsDeleting(true);
     try {
       await api.delete(`/tasks/${taskId}`);
       toast.success(`Nhiệm vụ đã được xoá thành công!`);
@@ -25,6 +29,7 @@ const TaskCard = ({ task, index, handleTaskChanged }) => {
     } catch (error) {
       console.error("Lỗi xảy ra khi xoá nhiệm vụ:", error);
       toast.error("Có lỗi xảy ra khi xoá nhiệm vụ.");
+      setIsDeleting(false);
     }
   };
 
@@ -41,6 +46,8 @@ const TaskCard = ({ task, index, handleTaskChanged }) => {
   };
 
   const toggleTaskCompleteButton = async () => {
+    if (isUpdating) return;
+    setIsUpdating(true);
     try {
       if (task.status === "active") {
         await api.put(`/tasks/${task._id}`, {
@@ -56,9 +63,11 @@ const TaskCard = ({ task, index, handleTaskChanged }) => {
         toast.success(`${task.title} đã đổi sang chưa hoàn thành!`);
       }
       handleTaskChanged(); // Gọi hàm handleTaskChanged để cập nhật danh sách nhiệm vụ
+      setIsUpdating(false);
     } catch (error) {
       console.error("Lỗi xảy ra khi cập nhật nhiệm vụ:", error);
       toast.error("Có lỗi xảy ra khi cập nhật nhiệm vụ.");
+      setIsUpdating(false);
     }
   };
 
@@ -88,6 +97,7 @@ const TaskCard = ({ task, index, handleTaskChanged }) => {
               : "text-muted-foreground hover:text-primary",
           )}
           onClick={toggleTaskCompleteButton}
+          disabled={isUpdating}
         >
           {task.status === "complete" ? (
             <CheckCircle2 className="size-5" />
@@ -163,6 +173,7 @@ const TaskCard = ({ task, index, handleTaskChanged }) => {
             size="icon"
             className="shrink-0 transition-colors size-8 text-muted-foreground hover:text-destructive"
             onClick={() => deletedTask(task._id)}
+            disabled={isDeleting}
           >
             <Trash2 className="size-4" />
           </Button>
